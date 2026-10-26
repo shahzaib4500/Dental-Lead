@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "description": "Territory qualification configuration. Only explicitly approved ZIP codes, cities, or states qualify leads for automatic ingestion.",
+  "approved_zip_codes": [],
+  "approved_cities": [],
+  "approved_states": [],
+  "require_approved_territory": true
+}

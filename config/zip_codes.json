@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "description": "Registry of candidate ZIP codes for Texas territory research.",
+  "state_focus": "TX",
+  "zip_codes": [
+    {
+      "zip_code": "78701",
+      "status": "candidate"
+    },
+    {
+      "zip_code": "75201",
+      "status": "candidate"
+    },
+    {
+      "zip_code": "78702",
+      "status": "candidate"
+    }
+  ]
+}

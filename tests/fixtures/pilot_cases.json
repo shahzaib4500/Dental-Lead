@@ -1,0 +1,102 @@
+[
+  {
+    "id": "case_1_clean_prm",
+    "description": "Clean independent general dentistry practice in approved territory 91423",
+    "campaign": "PRM",
+    "expected_status": "Qualified",
+    "raw_data": {
+      "title": "Sherman Oaks Family Dentistry",
+      "categoryName": "General dentist",
+      "phone": "(818) 555-0101",
+      "website": "https://shermanoaksfamilydental.example",
+      "address": "14120 Magnolia Blvd, Sherman Oaks, CA 91423",
+      "placeId": "ChIJ_prm_clean_1"
+    }
+  },
+  {
+    "id": "case_2_dso_chain",
+    "description": "Heartland Dental affiliated practice (DSO signal)",
+    "campaign": "PRM",
+    "expected_status": "Needs Review",
+    "raw_data": {
+      "title": "Heartland Dental Care of Sherman Oaks",
+      "categoryName": "Dentist",
+      "phone": "(818) 555-0102",
+      "website": "https://heartlanddental.example",
+      "address": "14200 Ventura Blvd, Sherman Oaks, CA 91423",
+      "placeId": "ChIJ_dso_1"
+    }
+  },
+  {
+    "id": "case_3_inhouse_implants",
+    "description": "General practice with periodontist and implant surgery on bio",
+    "campaign": "PRM",
+    "expected_status": "Needs Review",
+    "website_text": "Meet Dr. John Doe, board-certified periodontist specializing in dental implant placement and bone grafting.",
+    "raw_data": {
+      "title": "Valley Dental Implant Center",
+      "categoryName": "General dentist",
+      "phone": "(818) 555-0103",
+      "website": "https://valleydentalimplants.example",
+      "address": "14300 Ventura Blvd, Sherman Oaks, CA 91423",
+      "placeId": "ChIJ_implants_1"
+    }
+  },
+  {
+    "id": "case_4_dnc_match",
+    "description": "Matches existing referrer / DNC office phone number",
+    "campaign": "PRM",
+    "expected_status": "Existing Referrer / DNC",
+    "raw_data": {
+      "title": "Bamshad DDS",
+      "categoryName": "General dentist",
+      "phone": "818-345-6477",
+      "website": "https://bamshaddental.example",
+      "address": "19231 Victory Blvd | Suite 458 | Tarzana, CA 91335",
+      "placeId": "ChIJ_dnc_1"
+    }
+  },
+  {
+    "id": "case_5_excluded_chain_wisdom",
+    "description": "ClearChoice clinic under Wisdom Sales campaign",
+    "campaign": "WISDOM_SALES",
+    "expected_status": "Disqualified",
+    "raw_data": {
+      "title": "ClearChoice Dental Implant Center",
+      "categoryName": "Oral surgeon",
+      "phone": "(818) 555-0105",
+      "website": "https://clearchoice.com/encino",
+      "address": "16000 Ventura Blvd, Encino, CA 91436",
+      "placeId": "ChIJ_clearchoice_1"
+    }
+  },
+  {
+    "id": "case_6_same_domain_diff_address",
+    "description": "Branch location with same core domain but different street address",
+    "campaign": "PRM",
+    "expected_status": "Qualified",
+    "expected_duplicate_status": "Different Location of Known Entity",
+    "raw_data": {
+      "title": "Sherman Oaks Family Dentistry - East Branch",
+      "categoryName": "General dentist",
+      "phone": "(818) 555-0106",
+      "website": "https://shermanoaksfamilydental.example/east",
+      "address": "15000 Ventura Blvd, Sherman Oaks, CA 91423",
+      "placeId": "ChIJ_prm_branch_1"
+    }
+  },
+  {
+    "id": "case_7_missing_website",
+    "description": "Practice missing website info on Google Maps (must be skipped/disqualified)",
+    "campaign": "PRM",
+    "expected_status": "Disqualified",
+    "raw_data": {
+      "title": "No Website Dental Office",
+      "categoryName": "Dentist",
+      "phone": "(818) 555-0107",
+      "website": null,
+      "address": "14500 Magnolia Blvd, Sherman Oaks, CA 91423",
+      "placeId": "ChIJ_noweb_1"
+    }
+  }
+]

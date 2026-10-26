@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "type": "phone",
+      "value": "+15551234567",
+      "reason": "Existing referral relationship",
+      "active": true
+    }
+  ]
+}

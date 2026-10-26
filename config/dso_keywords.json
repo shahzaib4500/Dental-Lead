@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "description": "Organizations and keywords used to flag possible DSO or corporate dentistry affiliation.",
+  "match_mode": "case_insensitive",
+  "keywords": [
+    "Heartland Dental",
+    "Aspen Dental",
+    "Pacific Dental Services",
+    "Smile Brands",
+    "MB2 Dental",
+    "DECA Dental",
+    "Gentle Dental",
+    "Great Expressions",
+    "Western Dental"
+  ],
+  "action_on_match": "needs_review"
+}

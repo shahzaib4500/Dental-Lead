@@ -1,0 +1,261 @@
+{
+  "version": 2,
+  "base_id": "appnKumhO07VlzUe8",
+  "tables": {
+    "leads": {
+      "id": "tblLzZp1Gc0Pvyvo5",
+      "name": "Practice Pipeline",
+      "purpose": "Master practice and eligible prospect records"
+    },
+    "zips": {
+      "id": "tblu1CY9070zVsqot",
+      "name": "Zipcode List",
+      "purpose": "Approved ZIP/territory records"
+    },
+    "dnc": {
+      "id": "tblHhplF40Xc8FYQ7",
+      "name": "CLEAN DNC List/Currently Referring Offices",
+      "purpose": "Exclusion and existing-referrer source"
+    },
+    "old_dnc": {
+      "id": "tblaLCiFEqO7ouDVx",
+      "name": "OLD DNC List/Currently Referring Offices",
+      "purpose": "Legacy reference"
+    },
+    "outreach_log": {
+      "id": "tblxSfnQVSuJ3HgVj",
+      "name": "[AS] Outreach Log",
+      "purpose": "Actual outreach activities and sales history"
+    },
+    "contacts": {
+      "id": "tblU2E6ryS5eT8EVD",
+      "name": "Contacts",
+      "purpose": "Actual contact records"
+    },
+    "sales_appts": {
+      "id": "tbl9Zc4mhG2AibN11",
+      "name": "Sales Appts",
+      "purpose": "Booked sales appointments"
+    },
+    "confirmations": {
+      "id": "tblCzYikeEWixpKgi",
+      "name": "Confirmations",
+      "purpose": "Actual appointment confirmations"
+    },
+    "follow_up_cadence": {
+      "id": "tblkDeGSqlGWWUN82",
+      "name": "Follow Up Cadence",
+      "purpose": "Scheduled or completed follow-up activities"
+    },
+    "qa_call_listening": {
+      "id": "tblB7E8SGIUQbSsP4",
+      "name": "QA | Call Listening",
+      "purpose": "Actual call quality reviews"
+    }
+  },
+  "relationships": {
+    "practice_to_zip": {
+      "from_table": "tblLzZp1Gc0Pvyvo5",
+      "to_table": "tblu1CY9070zVsqot",
+      "field_id": "fldQTixIhZnJui3VE",
+      "field_name": "Zipcode List",
+      "inverse_field_id": "fldPXFMudmENIBAqQ",
+      "inverse_field_name": "Apify Prospects | Practice Pipeline",
+      "is_canonical": true
+    },
+    "practice_to_contacts": {
+      "from_table": "tblLzZp1Gc0Pvyvo5",
+      "to_table": "tblU2E6ryS5eT8EVD",
+      "field_id": "fldoQKH1BsoG2bS3e",
+      "field_name": "Contacts",
+      "inverse_field_id": "flds3eo0wGnRgDDTs",
+      "inverse_field_name": "Practice Name",
+      "is_canonical": true
+    },
+    "practice_to_outreach_primary": {
+      "from_table": "tblLzZp1Gc0Pvyvo5",
+      "to_table": "tblxSfnQVSuJ3HgVj",
+      "field_id": "fldYfHi9wHogyDjAp",
+      "field_name": "[AS] Outreach Log",
+      "inverse_field_id": "fldNBDz2oEkaDNfJy",
+      "inverse_field_name": "Practice Name",
+      "is_canonical": true,
+      "audit_notes": "Canonical link populated across 30+ live records."
+    },
+    "practice_to_outreach_secondary": {
+      "from_table": "tblLzZp1Gc0Pvyvo5",
+      "to_table": "tblxSfnQVSuJ3HgVj",
+      "field_id": "fldfmJkQJe6hVjQDZ",
+      "field_name": "[AS] Outreach Log 2",
+      "inverse_field_id": "fldQo2uiLPDfL8heQ",
+      "inverse_field_name": "Practice Name to Contacts",
+      "is_canonical": false,
+      "audit_notes": "Unused/unpopulated in existing records (0 populated). Must not be written to."
+    },
+    "practice_to_sales_appts": {
+      "from_table": "tblLzZp1Gc0Pvyvo5",
+      "to_table": "tbl9Zc4mhG2AibN11",
+      "field_id": "fld9ZOn9VFY3NhZJa",
+      "field_name": "Sales Appts",
+      "inverse_field_id": "fldIQiYs64meGt7Gd",
+      "inverse_field_name": "Practice Name",
+      "is_canonical": true
+    },
+    "practice_to_follow_up": {
+      "from_table": "tblLzZp1Gc0Pvyvo5",
+      "to_table": "tblkDeGSqlGWWUN82",
+      "field_id": "fldPeocX1XVLrGogn",
+      "field_name": "Follow Up Cadance",
+      "inverse_field_id": "fldasbBVzo4cszTCl",
+      "inverse_field_name": "Practice",
+      "is_canonical": true
+    },
+    "practice_to_clean_dnc": {
+      "from_table": "tblLzZp1Gc0Pvyvo5",
+      "to_table": "tblHhplF40Xc8FYQ7",
+      "field_id": "fldReRjzvqpOcy3Qu",
+      "field_name": "CLEAN DNC List/Currently Referring Offices",
+      "inverse_field_id": "fld418Ackmqop6uM8",
+      "inverse_field_name": "Sales Appts",
+      "is_canonical": true,
+      "audit_notes": "Inverse link in CLEAN DNC table is named 'Sales Appts' but points to Practice Pipeline."
+    },
+    "sales_appts_to_confirmations": {
+      "from_table": "tbl9Zc4mhG2AibN11",
+      "to_table": "tblCzYikeEWixpKgi",
+      "field_id": "fldwnOYVUT9iAM4Wb",
+      "field_name": "Confirmations",
+      "inverse_field_id": "fldzB74UUnd0rRBHy",
+      "inverse_field_name": "Sales Appts",
+      "is_canonical": true
+    },
+    "sales_appts_to_follow_up": {
+      "from_table": "tbl9Zc4mhG2AibN11",
+      "to_table": "tblkDeGSqlGWWUN82",
+      "field_id": "fldrw7DausaoFvnnP",
+      "field_name": "Follow Up Cadence",
+      "inverse_field_id": "fldzDcYzami0UuBIM",
+      "inverse_field_name": "Sales Appts",
+      "is_canonical": true
+    },
+    "sales_appts_to_zip": {
+      "from_table": "tbl9Zc4mhG2AibN11",
+      "to_table": "tblu1CY9070zVsqot",
+      "field_id": "fldlMJD6QaHhnLNLB",
+      "field_name": "Zipcode list ",
+      "inverse_field_id": "fldyT9Pz7r1ZZO5qT",
+      "inverse_field_name": "Sales Appts",
+      "is_canonical": true
+    },
+    "outreach_to_qa": {
+      "from_table": "tblxSfnQVSuJ3HgVj",
+      "to_table": "tblB7E8SGIUQbSsP4",
+      "field_id": "fldhsLiq35AMlBP80",
+      "field_name": "QA | Call Listening",
+      "inverse_field_id": "fld8hNtph090uPIia",
+      "inverse_field_name": "[AS] Outreach Log",
+      "is_canonical": true
+    },
+    "outreach_to_dnc_primary": {
+      "from_table": "tblxSfnQVSuJ3HgVj",
+      "to_table": "tblHhplF40Xc8FYQ7",
+      "field_id": "fldZJIJsMzR8KltSA",
+      "field_name": "DNC/Exclusion List",
+      "inverse_field_id": "fldjNPiQuqMHfrEMp",
+      "inverse_field_name": "Outreach Log",
+      "is_canonical": true,
+      "audit_notes": "Primary link used in existing DNC-to-outreach records."
+    },
+    "outreach_to_dnc_secondary": {
+      "from_table": "tblxSfnQVSuJ3HgVj",
+      "to_table": "tblHhplF40Xc8FYQ7",
+      "field_id": "fldNhzogGsE2p2JlP",
+      "field_name": "CLEAN DNC List/Currently Referring Offices",
+      "inverse_field_id": "fldpQdVNKQ0ZoNpE2",
+      "inverse_field_name": "[AS] Outreach Log",
+      "is_canonical": false,
+      "audit_notes": "Alternate link populated in very few legacy records."
+    }
+  },
+  "fields": {
+    "practice_name": {
+      "id": "fldJdczwAbnLj0Xbo",
+      "name": "Practice Name",
+      "type": "singleLineText",
+      "required": true
+    },
+    "phone": {
+      "id": "fldBcsn0PKsTHv5H8",
+      "name": "Phone Number",
+      "type": "phoneNumber",
+      "required": false
+    },
+    "website": {
+      "id": "fldv9w9larKPIvehO",
+      "name": "Company Website",
+      "type": "singleLineText",
+      "required": false
+    },
+    "address": {
+      "id": "fld2oHbwyUU5zrCpX",
+      "name": "Address",
+      "type": "richText",
+      "required": false
+    },
+    "zip_link": {
+      "id": "fldQTixIhZnJui3VE",
+      "name": "Zipcode List",
+      "type": "multipleRecordLinks",
+      "required": false
+    },
+    "zip_text": {
+      "id": "fld4luux8OT8Y7nzx",
+      "name": "Zipcode",
+      "type": "singleLineText",
+      "required": false
+    },
+    "practice_type": {
+      "id": "fldC5eQbXfAU5Mpz4",
+      "name": "Practice Type",
+      "type": "multipleSelects",
+      "required": false
+    },
+    "lead_type": {
+      "id": "fldChHcXBg1GNId3S",
+      "name": "Lead Type",
+      "type": "singleSelect",
+      "required": false
+    },
+    "qualification": {
+      "id": "fldhFjad7nSaIrMS0",
+      "name": "Qualified?",
+      "type": "singleSelect",
+      "required": false
+    },
+    "prospect_date": {
+      "id": "fldwTfzCgPSf0StPp",
+      "name": "Prospect Date",
+      "type": "date",
+      "required": false
+    },
+    "prospect_log": {
+      "id": "fldaQf0VFBZ9PynmK",
+      "name": "Prospect Log",
+      "type": "singleLineText",
+      "required": false
+    }
+  },
+  "status_map": {
+    "Qualified": "Manually Qualified",
+    "Unqualified": "Unqualified",
+    "DNC": "DNC List"
+  },
+  "default_lead_type": {
+    "PRM": "Standard PRM",
+    "WISDOM_SALES": "Standard PRM"
+  },
+  "default_practice_type": {
+    "PRM": "General Dentist",
+    "WISDOM_SALES": "Oral surgeon"
+  }
+}

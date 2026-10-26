@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "blockers": [
+    {
+      "id": "TERRITORY_NOT_CONFIGURED",
+      "enabled": true,
+      "severity": "block",
+      "applies_to": ["PRM", "WISDOM_SALES"],
+      "condition": "no_approved_territory",
+      "status": "Needs Review",
+      "message": "Approved territories have not been configured."
+    },
+    {
+      "id": "MISSING_PRACTICE_NAME",
+      "enabled": true,
+      "severity": "block",
+      "applies_to": ["PRM", "WISDOM_SALES"],
+      "condition": "missing_practice_name",
+      "action": "skip",
+      "status": "Disqualified",
+      "message": "Google Maps result does not contain a practice name."
+    },
+    {
+      "id": "MISSING_ADDRESS",
+      "enabled": true,
+      "severity": "block",
+      "applies_to": ["PRM", "WISDOM_SALES"],
+      "condition": "missing_address",
+      "action": "skip",
+      "status": "Disqualified",
+      "message": "Google Maps result does not contain a usable address."
+    },
+    {
+      "id": "MISSING_PHONE",
+      "enabled": true,
+      "severity": "block",
+      "applies_to": ["PRM", "WISDOM_SALES"],
+      "condition": "missing_phone",
+      "action": "skip",
+      "status": "Disqualified",
+      "message": "Google Maps result does not contain a phone number."
+    },
+    {
+      "id": "MISSING_WEBSITE",
+      "enabled": true,
+      "severity": "block",
+      "applies_to": ["PRM", "WISDOM_SALES"],
+      "condition": "missing_website",
+      "action": "skip",
+      "status": "Disqualified",
+      "message": "Google Maps result does not contain a website."
+    },
+    {
+      "id": "DSO_MATCH",
+      "enabled": true,
+      "severity": "review",
+      "applies_to": ["PRM", "WISDOM_SALES"],
+      "condition": "dso_keyword_match",
+      "status": "Needs Review",
+      "message": "Possible DSO affiliation requires review."
+    },
+    {
+      "id": "EXISTING_REFERRER",
+      "enabled": true,
+      "severity": "block",
+      "applies_to": ["PRM", "WISDOM_SALES"],
+      "condition": "existing_referrer_match",
+      "status": "Existing Referrer / DNC",
+      "message": "This practice matches an existing referrer."
+    },
+    {
+      "id": "DO_NOT_CONTACT",
+      "enabled": true,
+      "severity": "block",
+      "applies_to": ["PRM", "WISDOM_SALES"],
+      "condition": "do_not_contact_match",
+      "status": "Existing Referrer / DNC",
+      "message": "This practice matches the do-not-contact list."
+    },
+    {
+      "id": "DUPLICATE_LEAD",
+      "enabled": true,
+      "severity": "block",
+      "applies_to": ["PRM", "WISDOM_SALES"],
+      "condition": "duplicate_match",
+      "status": "Duplicate",
+      "message": "This practice already exists in the discovered or Airtable records."
+    }
+  ]
+}

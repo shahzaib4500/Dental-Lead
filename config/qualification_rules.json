@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "campaigns": {
+    "PRM": {
+      "target_categories": [
+        "general dentist",
+        "family dentist",
+        "comprehensive dentist"
+      ],
+      "prefer_independent_practices": true,
+      "dso_match_action": "needs_review",
+      "excluded_chain_action": "none"
+    },
+    "WISDOM_SALES": {
+      "target_categories": [
+        "periodontist",
+        "oral surgeon",
+        "oral and maxillofacial surgeon",
+        "prosthodontist",
+        "jaw surgeon"
+      ],
+      "prefer_independent_practices": true,
+      "dso_match_action": "needs_review",
+      "excluded_chain_action": "disqualify"
+    }
+  },
+  "required_google_maps_fields": [
+    "practice_name",
+    "website",
+    "phone",
+    "address"
+  ],
+  "missing_required_field_action": "skip",
+  "ambiguous_duplicate_action": "needs_review",
+  "dedupe": {
+    "domain_match_different_address": "new_location",
+    "shared_platforms": [
+      "facebook.com",
+      "instagram.com",
+      "linktr.ee",
+      "sites.google.com",
+      "yelp.com",
+      "yellowpages.com",
+      "mapquest.com",
+      "linkedin.com",
+      "twitter.com",
+      "x.com"
+    ]
+  },
+  "search": {
+    "default_search_scope": "zip",
+    "query_format_zip": "{keyword} in {zipcode}",
+    "query_format_city": "{keyword} in {city}"
+  }
+}
+

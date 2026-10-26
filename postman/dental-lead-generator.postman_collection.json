@@ -1,0 +1,2048 @@
+{
+  "info": {
+    "_postman_id": "c71a39f0-8c29-4d6b-95a2-3f821dfbb388",
+    "name": "Dental Lead Generator API",
+    "description": "Postman Collection v2.1 for Wizdom Dental Lead Generator API.\n\n### Safe Usage & Architecture:\n- **Safe Local Testing**: All configuration reads/previews, health checks, blocker listings, and lead qualification previews operate strictly offline without network access or writes.\n- **Configuration Writes**: `/api/config/<resource>` and `/api/config/territories/approve` persist local JSON settings in `config/*.json` with schema validation and atomic file writes. Candidate ZIPs never automatically approve territories.\n- **Airtable Prepared but Unintegrated**: Airtable client interfaces and mapping exist in codebase, but live ingestion is disabled by default (`ENABLE_LIVE_INGESTION=false`) and no remote writes are performed.\n- **Guarded Pipeline Execution**: `POST /api/pipeline/run` defaults to `EXECUTION_MODE=dry_run` and requires explicit authorization flags to write anywhere.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health & Diagnostics",
+      "description": "Endpoints for inspecting server status, runtime modes, and configuration validation.",
+      "item": [
+        {
+          "name": "Health Check (Valid Status)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Service name is correct\", function () {",
+                  "    pm.expect(jsonData.service).to.eql('dental-lead-generator');",
+                  "});",
+                  "pm.test(\"Server status is healthy\", function () {",
+                  "    pm.expect(jsonData.status).to.eql('healthy');",
+                  "});",
+                  "pm.test(\"Execution mode is dry_run by default\", function () {",
+                  "    pm.expect(jsonData.execution_mode).to.eql('dry_run');",
+                  "});",
+                  "pm.test(\"Live ingestion is strictly disabled\", function () {",
+                  "    pm.expect(jsonData.enable_live_ingestion).to.be.false;",
+                  "});",
+                  "pm.test(\"Config status is valid\", function () {",
+                  "    pm.expect(jsonData.config_status).to.eql('valid');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Read-only health check returning runtime mode, Apify actor configuration, and configuration validation status.\n\n**Safe for local testing (No external side effects).**"
+          },
+          "response": [
+            {
+              "name": "200 Healthy Response (Verified Locally)",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/health",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "health"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"healthy\",\n  \"service\": \"dental-lead-generator\",\n  \"execution_mode\": \"dry_run\",\n  \"enable_live_ingestion\": false,\n  \"apify_actor_id\": \"nwua9Gu5YrADL7ZDj\",\n  \"apify_configured\": true,\n  \"airtable_configured\": false,\n  \"config_status\": \"valid\",\n  \"config_error\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Configuration Overview & Reload",
+      "description": "Read overall configuration status, reload all JSON files, or list active blockers.",
+      "item": [
+        {
+          "name": "Get Configuration Overview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Contains territories metadata\", function () {",
+                  "    pm.expect(jsonData).to.have.property('territories');",
+                  "});",
+                  "pm.test(\"Territory requires approved territory\", function () {",
+                  "    pm.expect(jsonData.territories.require_approved_territory).to.be.true;",
+                  "});",
+                  "pm.test(\"Contains zip_codes candidate summary\", function () {",
+                  "    pm.expect(jsonData).to.have.property('zip_codes');",
+                  "});",
+                  "pm.test(\"State focus is Texas (TX)\", function () {",
+                  "    pm.expect(jsonData.zip_codes.state_focus).to.eql('TX');",
+                  "});",
+                  "pm.test(\"Lists available resources\", function () {",
+                  "    pm.expect(jsonData.available_resources).to.be.an('array').that.includes('zip_codes');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/config",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config"
+              ]
+            },
+            "description": "Returns summary statistics and metadata across all 8 configuration resources without exposing secrets.\n\n**Safe for local testing (Read-only).**"
+          },
+          "response": [
+            {
+              "name": "200 Overview Response (Verified Locally)",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/config",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "config"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"dso_keywords\": {\n    \"count\": 14,\n    \"keywords\": [\n      \"Heartland Dental\",\n      \"Aspen Dental\"\n    ],\n    \"action\": \"needs_review\"\n  },\n  \"excluded_chains\": {\n    \"wisdom_sales\": [\n      \"ClearChoice\",\n      \"Affordable Dentures\"\n    ]\n  },\n  \"territories\": {\n    \"require_approved_territory\": true,\n    \"approved_zip_codes\": [],\n    \"approved_cities\": [],\n    \"approved_states\": [],\n    \"is_configured\": false\n  },\n  \"existing_referrers\": {\n    \"total_entries\": 3,\n    \"active_entries\": 3\n  },\n  \"do_not_contact\": {\n    \"total_entries\": 4,\n    \"active_entries\": 4\n  },\n  \"zip_codes\": {\n    \"total_candidates\": 10,\n    \"state_focus\": \"TX\"\n  },\n  \"qualification_rules\": {\n    \"campaigns\": [\n      \"PRM\",\n      \"WISDOM_SALES\"\n    ],\n    \"required_google_maps_fields\": [\n      \"practice_name\",\n      \"website\",\n      \"phone\",\n      \"address\"\n    ]\n  },\n  \"blockers\": {\n    \"total\": 9,\n    \"enabled\": 9\n  },\n  \"available_resources\": [\n    \"blockers\",\n    \"do_not_contact\",\n    \"dso_keywords\",\n    \"excluded_chains\",\n    \"existing_referrers\",\n    \"qualification_rules\",\n    \"territories\",\n    \"zip_codes\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Reload Configuration Files",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status is success\", function () {",
+                  "    pm.expect(jsonData.status).to.eql('success');",
+                  "});",
+                  "pm.test(\"Blockers loaded count is positive\", function () {",
+                  "    pm.expect(jsonData.blockers_loaded).to.be.above(0);",
+                  "});",
+                  "pm.test(\"ZIP codes loaded count is positive\", function () {",
+                  "    pm.expect(jsonData.zip_codes_loaded).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/config/reload",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config",
+                "reload"
+              ]
+            },
+            "description": "Forces hot-reload and strict schema validation of all JSON configuration files from disk.\n\n**Safe for local testing (Re-reads local files).**"
+          },
+          "response": [
+            {
+              "name": "200 Reload Successful (Verified Locally)",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/config/reload",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "config",
+                    "reload"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"success\",\n  \"message\": \"All JSON configuration files reloaded and validated successfully.\",\n  \"blockers_loaded\": 9,\n  \"dso_keywords_loaded\": 14,\n  \"zip_codes_loaded\": 10\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Blockers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Total blockers count is reported\", function () {",
+                  "    pm.expect(jsonData.total).to.be.at.least(8);",
+                  "});",
+                  "pm.test(\"Blockers array is populated\", function () {",
+                  "    pm.expect(jsonData.blockers).to.be.an('array');",
+                  "});",
+                  "pm.test(\"Mandatory blocker TERRITORY_NOT_CONFIGURED present\", function () {",
+                  "    pm.expect(jsonData.blockers.some(function(b){ return b.id === 'TERRITORY_NOT_CONFIGURED'; })).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/blockers",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "blockers"
+              ]
+            },
+            "description": "Returns list of registered blockers, condition triggers, severities, and enabled states.\n\n**Safe for local testing (Read-only).**"
+          },
+          "response": [
+            {
+              "name": "200 Blockers List (Verified Locally)",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/blockers",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "blockers"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"total\": 9,\n  \"blockers\": [\n    {\n      \"id\": \"TERRITORY_NOT_CONFIGURED\",\n      \"enabled\": true,\n      \"severity\": \"block\",\n      \"applies_to\": [\n        \"PRM\",\n        \"WISDOM_SALES\"\n      ],\n      \"condition\": \"no_approved_territory\",\n      \"status\": \"Needs Review\",\n      \"message\": \"Approved territories have not been configured.\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lead Configuration Resources (CRUD)",
+      "description": "Read, validate, and update individual configuration resources: territories, zip_codes, dso_keywords, excluded_chains, existing_referrers, do_not_contact, qualification_rules, blockers.",
+      "item": [
+        {
+          "name": "Get Specific Resource - Texas Candidate ZIPs (Success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Resource identifier matches\", function () {",
+                  "    pm.expect(jsonData.resource).to.eql('zip_codes');",
+                  "});",
+                  "pm.test(\"Data contains Texas state focus\", function () {",
+                  "    pm.expect(jsonData.data.state_focus).to.eql('TX');",
+                  "});",
+                  "pm.test(\"Data contains zip_codes array\", function () {",
+                  "    pm.expect(jsonData.data.zip_codes).to.be.an('array');",
+                  "});",
+                  "pm.test(\"First entry is 78701 candidate\", function () {",
+                  "    pm.expect(jsonData.data.zip_codes[0].zip_code).to.eql('78701');",
+                  "});",
+                  "pm.test(\"First entry status is candidate\", function () {",
+                  "    pm.expect(jsonData.data.zip_codes[0].status).to.eql('candidate');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/config/{{candidate_resource}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config",
+                "{{candidate_resource}}"
+              ]
+            },
+            "description": "Retrieve the candidate ZIP code registry for Texas territory research.\n\n**Safe for local testing (Read-only).**"
+          },
+          "response": [
+            {
+              "name": "200 Candidate ZIP Codes (Verified Locally)",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/config/zip_codes",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "config",
+                    "zip_codes"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"resource\": \"zip_codes\",\n  \"data\": {\n    \"version\": 1,\n    \"description\": \"Registry of candidate and approved ZIP codes for territory qualification.\",\n    \"state_focus\": \"TX\",\n    \"zip_codes\": [\n      {\n        \"zip_code\": \"78701\",\n        \"city\": \"Austin\",\n        \"state\": \"TX\",\n        \"county\": \"Travis\",\n        \"status\": \"candidate\"\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Specific Resource - Unknown Resource (Failure 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error message mentions unknown resource\", function () {",
+                  "    pm.expect(jsonData.error).to.include('Unknown configuration resource');",
+                  "});",
+                  "pm.test(\"Lists allowed resources\", function () {",
+                  "    pm.expect(jsonData.allowed_resources).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/config/non_existent_resource",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config",
+                "non_existent_resource"
+              ]
+            },
+            "description": "Requests an unknown configuration resource, demonstrating allowlist enforcement.\n\n**Expected status: 404 Not Found.**"
+          },
+          "response": [
+            {
+              "name": "404 Unknown Resource (Verified Locally)",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/api/config/non_existent_resource",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "config",
+                    "non_existent_resource"
+                  ]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Unknown configuration resource 'non_existent_resource'\",\n  \"allowed_resources\": [\n    \"blockers\",\n    \"do_not_contact\",\n    \"dso_keywords\",\n    \"excluded_chains\",\n    \"existing_referrers\",\n    \"qualification_rules\",\n    \"territories\",\n    \"zip_codes\"\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Preview Proposed Config Change (Dry-Run Validate Without Saving)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status is valid\", function () {",
+                  "    pm.expect(jsonData.status).to.eql('valid');",
+                  "});",
+                  "pm.test(\"Resource is dso_keywords\", function () {",
+                  "    pm.expect(jsonData.resource).to.eql('dso_keywords');",
+                  "});",
+                  "pm.test(\"Preview object matches proposed input\", function () {",
+                  "    pm.expect(jsonData.preview.keywords).to.include('Test Corp DSO');",
+                  "});",
+                  "pm.test(\"Message confirms changes were NOT saved\", function () {",
+                  "    pm.expect(jsonData.message).to.include('Changes were NOT saved');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resource\": \"dso_keywords\",\n  \"data\": {\n    \"version\": 1,\n    \"match_mode\": \"case_insensitive\",\n    \"keywords\": [\n      \"Aspen Dental\",\n      \"Heartland Dental\",\n      \"Smile Brands\",\n      \"Test Corp DSO\"\n    ],\n    \"action_on_match\": \"needs_review\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/config/preview",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config",
+                "preview"
+              ]
+            },
+            "description": "Validates proposed configuration payload against Pydantic schema without modifying any files on disk.\n\n**Safe for local testing (No disk writes).**"
+          },
+          "response": [
+            {
+              "name": "200 Preview Valid (Verified Locally)",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/config/preview",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "config",
+                    "preview"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"valid\",\n  \"resource\": \"dso_keywords\",\n  \"preview\": {\n    \"version\": 1,\n    \"match_mode\": \"case_insensitive\",\n    \"keywords\": [\n      \"Aspen Dental\",\n      \"Heartland Dental\",\n      \"Smile Brands\",\n      \"Test Corp DSO\"\n    ],\n    \"action_on_match\": \"needs_review\"\n  },\n  \"message\": \"Proposed configuration for 'dso_keywords' is valid. Changes were NOT saved.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Preview Proposed Config Change - Invalid Schema (Failure 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status is invalid\", function () {",
+                  "    pm.expect(jsonData.status).to.eql('invalid');",
+                  "});",
+                  "pm.test(\"Error field indicates failure\", function () {",
+                  "    pm.expect(jsonData.error).to.include('Proposed configuration failed validation');",
+                  "});",
+                  "pm.test(\"Details explain validation fault\", function () {",
+                  "    pm.expect(jsonData.details).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resource\": \"dso_keywords\",\n  \"data\": {\n    \"version\": 1,\n    \"keywords\": \"Should be a list not string\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/config/preview",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config",
+                "preview"
+              ]
+            },
+            "description": "Demonstrates preview error response when invalid data type is provided.\n\n**Expected status: 400 Bad Request.**"
+          },
+          "response": [
+            {
+              "name": "400 Invalid Schema Preview (Verified Locally)",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/config/preview",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "config",
+                    "preview"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"invalid\",\n  \"resource\": \"dso_keywords\",\n  \"error\": \"Proposed configuration failed validation\",\n  \"details\": \"Schema validation error in 'dso_keywords': ...\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Candidate ZIP Codes (Local Update)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status is success\", function () {",
+                  "    pm.expect(jsonData.status).to.eql('success');",
+                  "});",
+                  "pm.test(\"Resource is zip_codes\", function () {",
+                  "    pm.expect(jsonData.resource).to.eql('zip_codes');",
+                  "});",
+                  "pm.test(\"Success message returned\", function () {",
+                  "    pm.expect(jsonData.message).to.include('validated and persisted successfully');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": 1,\n  \"description\": \"Registry of candidate ZIP codes for Texas territory research.\",\n  \"state_focus\": \"TX\",\n  \"zip_codes\": [\n    {\n      \"zip_code\": \"{{candidate_zip}}\",\n      \"city\": \"Austin\",\n      \"state\": \"TX\",\n      \"county\": \"Travis\",\n      \"status\": \"candidate\",\n      \"source\": \"USPS Directory 2026\",\n      \"notes\": \"Downtown Austin candidate\"\n    },\n    {\n      \"zip_code\": \"78702\",\n      \"city\": \"Austin\",\n      \"state\": \"TX\",\n      \"county\": \"Travis\",\n      \"status\": \"candidate\",\n      \"source\": \"USPS Directory 2026\",\n      \"notes\": \"East Austin candidate\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/config/{{candidate_resource}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config",
+                "{{candidate_resource}}"
+              ]
+            },
+            "description": "Updates the candidate ZIP code file with validated candidate records.\n\n**Safety Gate: Candidates cannot be directly set to 'approved' via this endpoint.**"
+          },
+          "response": [
+            {
+              "name": "200 ZIP Codes Updated (Verified Locally)",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/config/zip_codes",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "config",
+                    "zip_codes"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"success\",\n  \"resource\": \"zip_codes\",\n  \"message\": \"Configuration resource 'zip_codes' validated and persisted successfully.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Candidate ZIP Codes - Rejection of Direct Approval (Failure 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Rejection error message returned\", function () {",
+                  "    pm.expect(jsonData.error).to.include('cannot be directly marked \\'approved\\'');",
+                  "});",
+                  "pm.test(\"Guidance details point to deliberate approval route\", function () {",
+                  "    pm.expect(jsonData.details).to.include('/api/config/territories/approve');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": 1,\n  \"zip_codes\": [\n    {\n      \"zip_code\": \"{{candidate_zip}}\",\n      \"city\": \"Austin\",\n      \"state\": \"TX\",\n      \"status\": \"approved\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/config/{{candidate_resource}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config",
+                "{{candidate_resource}}"
+              ]
+            },
+            "description": "Attempts to mark a candidate ZIP as 'approved' through the candidate update route. The API refuses to prevent accidental live qualification.\n\n**Expected status: 403 Forbidden.**"
+          },
+          "response": [
+            {
+              "name": "403 Direct Approval Blocked (Verified Locally)",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/config/zip_codes",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "config",
+                    "zip_codes"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Candidate ZIP codes cannot be directly marked 'approved' via this endpoint.\",\n  \"details\": \"To approve territories, use POST /api/config/territories/approve with explicit business approval intent.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Approve Territory - Deliberate Promotion (Success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Status is success\", function () {",
+                  "    pm.expect(jsonData.status).to.eql('success');",
+                  "});",
+                  "pm.test(\"Newly approved contains requested ZIPs\", function () {",
+                  "    pm.expect(jsonData.newly_approved).to.include('78701');",
+                  "});",
+                  "pm.test(\"Total approved count is reported\", function () {",
+                  "    pm.expect(jsonData.total_approved_zip_codes).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"confirm_approval\": true,\n  \"zip_codes\": [\n    \"78701\",\n    \"78702\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/config/territories/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config",
+                "territories",
+                "approve"
+              ]
+            },
+            "description": "Deliberately promotes candidate ZIP codes to approved production territories in `config/territories.json`.\n\n**Requires 'confirm_approval: true'. Preserves ZIP leading zeros.**"
+          },
+          "response": [
+            {
+              "name": "200 Territory Approved (Verified Locally)",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/config/territories/approve",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "config",
+                    "territories",
+                    "approve"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"success\",\n  \"message\": \"Successfully approved 2 ZIP code(s) for live production ingestion.\",\n  \"newly_approved\": [\n    \"78701\",\n    \"78702\"\n  ],\n  \"total_approved_zip_codes\": 2\n}"
+            }
+          ]
+        },
+        {
+          "name": "Approve Territory - Missing Confirmation Flag (Failure 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error specifies confirmation requirement\", function () {",
+                  "    pm.expect(jsonData.error).to.include('Explicit territory approval confirmation required');",
+                  "});",
+                  "pm.test(\"Details explain confirm_approval flag\", function () {",
+                  "    pm.expect(jsonData.details).to.include('confirm_approval: true');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"confirm_approval\": false,\n  \"zip_codes\": [\n    \"78701\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/config/territories/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config",
+                "territories",
+                "approve"
+              ]
+            },
+            "description": "Fails closed when deliberate confirmation flag is omitted.\n\n**Expected status: 400 Bad Request.**"
+          },
+          "response": [
+            {
+              "name": "400 Confirmation Missing (Verified Locally)",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/config/territories/approve",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "config",
+                    "territories",
+                    "approve"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Explicit territory approval confirmation required\",\n  \"details\": \"Must include 'confirm_approval: true' to approve production territory.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Resource via PUT - Unknown Resource (Failure 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/config/non_existent_resource",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "config",
+                "non_existent_resource"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"version\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pipeline Preview & Discovery",
+      "description": "Dry-run lead evaluation preview and guarded Apify discovery.",
+      "item": [
+        {
+          "name": "Preview Qualification & Blockers (Offline Safe)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Campaign matches PRM\", function () {",
+                  "    pm.expect(jsonData.campaign).to.eql('PRM');",
+                  "});",
+                  "pm.test(\"Total evaluated is 2\", function () {",
+                  "    pm.expect(jsonData.total_evaluated).to.eql(2);",
+                  "});",
+                  "pm.test(\"Eligible for ingestion is 0 due to unapproved territory\", function () {",
+                  "    pm.expect(jsonData.eligible_for_ingestion).to.eql(0);",
+                  "});",
+                  "pm.test(\"Blocker counts recorded\", function () {",
+                  "    pm.expect(jsonData.blocker_counts).to.have.property('TERRITORY_NOT_CONFIGURED');",
+                  "});",
+                  "pm.test(\"Leads returned as array\", function () {",
+                  "    pm.expect(jsonData.leads).to.be.an('array').with.lengthOf(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaign\": \"{{default_campaign}}\",\n  \"leads\": [\n    {\n      \"title\": \"Austin Metro Family Dental\",\n      \"categoryName\": \"General dentist\",\n      \"phone\": \"+1 512-555-0101\",\n      \"website\": \"https://austinmetrofamilydental.example\",\n      \"address\": \"100 Congress Ave, Austin, TX 78701\",\n      \"placeId\": \"ChIJ_austin_1\"\n    },\n    {\n      \"title\": \"Aspen Dental Partners\",\n      \"categoryName\": \"Dentist\",\n      \"phone\": \"+1 512-555-0200\",\n      \"website\": \"https://aspendental.example\",\n      \"address\": \"200 Congress Ave, Austin, TX 78701\",\n      \"placeId\": \"ChIJ_aspen_2\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pipeline/preview",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "preview"
+              ]
+            },
+            "description": "Evaluates mock leads through normalization, deduplication, qualification, and blocker engine without launching Apify runs or writing to Airtable.\n\n**Safe for local testing (No scraping, no Airtable writes).**"
+          },
+          "response": [
+            {
+              "name": "200 Preview Results (Verified Locally)",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/pipeline/preview",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "pipeline",
+                    "preview"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"campaign\": \"PRM\",\n  \"total_evaluated\": 2,\n  \"eligible_for_ingestion\": 0,\n  \"blocker_counts\": {\n    \"TERRITORY_NOT_CONFIGURED\": 2,\n    \"DSO_MATCH\": 1\n  },\n  \"leads\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Preview Qualification - Invalid Campaign (Failure 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error explains invalid campaign\", function () {",
+                  "    pm.expect(jsonData.error).to.include('Invalid campaign');",
+                  "});",
+                  "pm.test(\"Permitted campaigns are listed\", function () {",
+                  "    pm.expect(jsonData.error).to.include('PRM');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaign\": \"NON_EXISTENT_CAMPAIGN\",\n  \"leads\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pipeline/preview",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "preview"
+              ]
+            },
+            "description": "Tests rejection of invalid campaign type in preview request.\n\n**Expected status: 400 Bad Request.**"
+          },
+          "response": [
+            {
+              "name": "400 Invalid Campaign (Verified Locally)",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/pipeline/preview",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "pipeline",
+                    "preview"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid campaign: 'NON_EXISTENT_CAMPAIGN'. Allowed: ['PRM', 'WISDOM_SALES']\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Run Pipeline Discovery - Dry Run (Guarded)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Execution mode is dry_run\", function () {",
+                  "    pm.expect(jsonData.execution_mode).to.eql('dry_run');",
+                  "});",
+                  "pm.test(\"Campaign is PRM\", function () {",
+                  "    pm.expect(jsonData.campaign).to.eql('PRM');",
+                  "});",
+                  "pm.test(\"Ingested count is 0 in dry run\", function () {",
+                  "    pm.expect(jsonData.ingested_count).to.eql(0);",
+                  "});",
+                  "pm.test(\"Ingested records array is empty\", function () {",
+                  "    pm.expect(jsonData.ingested_records).to.be.an('array').that.is.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaign\": \"{{default_campaign}}\",\n  \"location\": \"{{target_location}}\",\n  \"max_results\": 5,\n  \"mode\": \"dry_run\",\n  \"search_scope\": \"city\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pipeline/run",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "run"
+              ]
+            },
+            "description": "**DISCOVERY ENDPOINT**: Triggers Apify Actor `nwua9Gu5YrADL7ZDj` scraping.\n- Defaults to `dry_run` (Zero Airtable writes).\n- Does not write to Airtable unless live ingestion is explicitly configured and authorized."
+          },
+          "response": [
+            {
+              "name": "200 Discovery Results (Illustrative — requires live Apify execution)",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/pipeline/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "pipeline",
+                    "run"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"execution_mode\": \"dry_run\",\n  \"campaign\": \"PRM\",\n  \"summary\": {\n    \"total_discovered\": 5,\n    \"qualified\": 0,\n    \"needs_review\": 5,\n    \"disqualified\": 0,\n    \"duplicate\": 0,\n    \"existing_referrer_or_dnc\": 0,\n    \"eligible_for_ingestion\": 0,\n    \"blocker_counts\": {\n      \"TERRITORY_NOT_CONFIGURED\": 5\n    }\n  },\n  \"leads\": [],\n  \"ingested_count\": 0,\n  \"ingested_records\": []\n}"
+            }
+          ]
+        },
+        {
+          "name": "Run Pipeline - Unauthorized Live Ingestion (Failure 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "pm.test(\"Content-Type is JSON\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"application/json\");",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Error explains unauthorized live ingestion\", function () {",
+                  "    pm.expect(jsonData.error).to.include('Live ingestion is not authorized');",
+                  "});",
+                  "pm.test(\"Details explain safety flag requirement\", function () {",
+                  "    pm.expect(jsonData.details).to.include('ENABLE_LIVE_INGESTION');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaign\": \"{{default_campaign}}\",\n  \"location\": \"{{target_location}}\",\n  \"mode\": \"live_ingestion\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/pipeline/run",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "run"
+              ]
+            },
+            "description": "Attempts live ingestion without authorized credentials and flags. The server strictly rejects the request.\n\n**Expected status: 403 Forbidden.**"
+          },
+          "response": [
+            {
+              "name": "403 Live Ingestion Blocked (Verified Locally)",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{base_url}}/api/pipeline/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "pipeline",
+                    "run"
+                  ]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Live ingestion is not authorized\",\n  \"details\": \"ENABLE_LIVE_INGESTION must be set to 'true' in environment and complete Airtable credentials must be provided.\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Runs, ZIPs & Review Queue",
+      "description": "Portal-backed endpoints: discovery runs, candidate ZIP registration, and the human review queue. Backed by local SQLite (data/leads.db).",
+      "item": [
+        {
+          "name": "Register Candidate ZIPs (Success)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"added_zips is array\", function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.added_zips).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/zips",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "zips"
+              ]
+            },
+            "description": "Adds ZIPs as status=candidate (never approved). ZIPs must be 5-digit strings.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"zips\": [\n    \"{{candidate_zip}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register Candidate ZIPs - Empty List (Failure 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/zips",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "zips"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"zips\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register Candidate ZIPs - Invalid ZIP (Failure 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/zips",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "zips"
+              ]
+            },
+            "description": "Non 5-digit values are rejected.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"zips\": [\n    \"ABC\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Discovery Run (Portal Flow)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"summary and run_id present\", function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('run_id'); pm.expect(j).to.have.property('summary'); pm.environment.set('run_id', j.run_id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/runs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "runs"
+              ]
+            },
+            "description": "Same engine as /api/pipeline/run. Always send mode=dry_run from Postman; without `mode` the server's EXECUTION_MODE from .env applies (may be live_ingestion).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaign\": \"{{default_campaign}}\",\n  \"location\": \"{{target_zip}}\",\n  \"search_scope\": \"zip\",\n  \"max_results\": 3,\n  \"mode\": \"dry_run\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Discovery Run - Invalid Campaign (Failure 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/runs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "runs"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaign\": \"NOPE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Discovery Run - Invalid Mode (Failure 400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/runs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "runs"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaign\": \"{{default_campaign}}\",\n  \"mode\": \"bogus\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Discovery Run - Unauthorized Live Ingestion (Failure 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/runs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "runs"
+              ]
+            },
+            "description": "Returns 403 unless ENABLE_LIVE_INGESTION=true and Airtable credentials are set.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"campaign\": \"{{default_campaign}}\",\n  \"location\": \"{{target_zip}}\",\n  \"mode\": \"live_ingestion\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Runs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"runs array + recent_errors\", function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.runs).to.be.an('array'); pm.expect(j).to.have.property('recent_errors');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/runs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "runs"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Get Run By ID (Not Found 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/runs/{{missing_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "runs",
+                "{{missing_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "List Review Queue",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"leads array\", function () {",
+                  "    var j = pm.response.json();",
+                  "    pm.expect(j.leads).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/review",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "review"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Review Lead (Not Found 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/review/{{missing_id}}/approve",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "review",
+                "{{missing_id}}",
+                "approve"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Review Lead (Not Found 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/review/{{missing_id}}/reject",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "review",
+                "{{missing_id}}",
+                "reject"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Portal",
+      "item": [
+        {
+          "name": "Review Portal (HTML)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is HTML\", function () {",
+                  "    pm.response.to.be.header(\"content-type\", \"text/html; charset=utf-8\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/portal",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "portal"
+              ]
+            },
+            "description": "Serves the static review dashboard (text/html)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
